@@ -1,52 +1,28 @@
 import RPi.GPIO as GPIO
 
-PWM_FREQ = 40
-LEFT_PWM = 11
-RIGHT_PWM = 3
-
-LEFT_DIR_1 = 13
-LEFT_DIR_2 = 15
-
-RIGHT_DIR_1 = 5
-RIGHT_DIR_2 = 7
+PWM_FREQ = 50
+CENTER_DUTY = 0.075
+MAX_DUTY = 0.025
+SPEED_PWM = 11
+TURN_PWM = 3
 
 class Driver(object):
     def __init__(self):
         GPIO.setmode(GPIO.BOARD)
-        GPIO.setup(LEFT_PWM, GPIO.OUT)
-        GPIO.setup(RIGHT_PWM, GPIO.OUT)
-        GPIO.setup(LEFT_DIR_1, GPIO.OUT)
-        GPIO.setup(LEFT_DIR_2, GPIO.OUT)
-        GPIO.setup(RIGHT_DIR_1, GPIO.OUT)
-        GPIO.setup(RIGHT_DIR_2, GPIO.OUT)
+        GPIO.setup(SPEED_PWM, GPIO.OUT)
+        GPIO.setup(TURN_PWM, GPIO.OUT)
 
-        self.left_pwm = GPIO.PWM(LEFT_PWM, PWM_FREQ)
-        self.right_pwm = GPIO.PWM(RIGHT_PWM, PWM_FREQ)
+        self.speed_pwm = GPIO.PWM(SPEED_PWM, PWM_FREQ)
+        self.turn_pwm = GPIO.PWM(TURN_PWM, PWM_FREQ)
 
-        self.left_pwm.start(0)
-        self.right_pwm.start(0)
+        self.speed_pwm.start(0)
+        self.turn_pwm.start(0)
         
-    def set_speed(self, v_left, v_right):
-        if v_left >= 0:
-            GPIO.output(LEFT_DIR_1, GPIO.HIGH)
-            GPIO.output(LEFT_DIR_2, GPIO.LOW)
-        else:
-            GPIO.output(LEFT_DIR_1, GPIO.LOW)
-            GPIO.output(LEFT_DIR_2, GPIO.HIGH)
-            v_left = -v_left
-        
-        if v_right >= 0:
-            GPIO.output(RIGHT_DIR_1, GPIO.HIGH)
-            GPIO.output(RIGHT_DIR_2, GPIO.LOW)
-        else:
-            GPIO.output(RIGHT_DIR_1, GPIO.LOW)
-            GPIO.output(RIGHT_DIR_2, GPIO.HIGH)
-            v_right = -v_right
-
-        self.left_pwm.ChangeDutyCycle(v_left)
-        self.right_pwm.ChangeDutyCycle(v_right)
+    def set_state(self, speed, turn):
+        self.speed_pwm.ChangeDutyCycle(CENTER_DUTY + MAX_DUTY * speed)
+        self.turn_pwm.ChangeDutyCycle(CENTER_DUTY + MAX_DUTY * turn)
 
     def kill(self):
-        self.left_pwm.stop()
-        self.right_pwm.stop()
+        self.speed_pwm.stop()
+        self.turn_pwm.stop()
         GPIO.cleanup()

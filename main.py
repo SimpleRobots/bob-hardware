@@ -39,7 +39,7 @@ class Connection(object):
                     self.parent.d.set_speed(int(parts[1]), int(parts[2]))
                     self.parent.send_all_ais(raw_cmd)
                 if cmd == "drive" and self.is_ai and self.parent.ai_mode:
-                    self.parent.d.set_speed(int(parts[1]), int(parts[2]))
+                    self.parent.d.set_state(int(parts[1]), int(parts[2]))
                     self.parent.send_all_ais(raw_cmd)
                 if cmd == "reward":
                     print(raw_cmd)
