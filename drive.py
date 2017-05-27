@@ -3,7 +3,7 @@ import RPi.GPIO as GPIO
 PWM_FREQ = 50
 CENTER_DUTY = 0.075
 MAX_DUTY = 0.025
-SPEED_PWM = 11
+SPEED_PWM = 5
 TURN_PWM = 3
 
 class Driver(object):
