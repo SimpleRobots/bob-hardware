@@ -4,10 +4,12 @@ import socket
 import threading
 from ultrasonic import Sensor
 import sys
+from Xbox.xbox import Joystick
+import numpy as np
 
 HOST = "0.0.0.0"
 PORT = 2323
-POLL_RATE_HZ = 10
+POLL_RATE_HZ = 50
 
 class Connection(object):
     def __init__(self, socket, parent):
@@ -36,7 +38,7 @@ class Connection(object):
                     if self.parent.ai_mode:
                         print("Human stealing control")
                     self.parent.ai_mode = False
-                    self.parent.d.set_speed(int(parts[1]), int(parts[2]))
+                    self.parent.d.set_state(int(parts[1]), int(parts[2]))
                     self.parent.send_all_ais(raw_cmd)
                 if cmd == "drive" and self.is_ai and self.parent.ai_mode:
                     self.parent.d.set_state(int(parts[1]), int(parts[2]))
@@ -80,6 +82,7 @@ class HardwareNetworkAPI(object):
         self.d = Driver()
         self.sensor = Sensor()
         self.ai_mode = True
+        self.deinitialized = True
         self.connections = []
         self.mark_for_removal = []
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -91,9 +94,43 @@ class HardwareNetworkAPI(object):
         t.start()
 
     def sensor_loop(self):
+        joy = Joystick()
         while True:
+            # Sense
             measurement = self.sensor.poll()
             self.send_all("sense " + " ".join(('%.2f' % x) for x in measurement))
+
+            # Get controls
+            speed = (joy.rightTrigger() - joy.leftTrigger()) * 100
+            turn = joy.leftX() * 100
+            reward = 1
+            if not joy.connected():
+                self.deinitialized = True
+            if joy.X():
+                self.ai_mode = False
+                self.deinitialized = False
+            if joy.Y():
+                self.ai_mode = True
+                self.deinitialized = False
+            if joy.B():
+                self.ai_mode = False
+                reward = -100
+            if joy.A():
+                reward = 100
+            if joy.Start():
+                self.send_all("record true")
+            if joy.Back():
+                self.send_all("record false")
+
+            if self.deinitialized:
+                self.d.set_state(0, 0)
+            elif not self.ai_mode:
+                self.d.set_state(speed, turn)
+                self.send_all("drive {} {}".format(int(speed), int(turn)))
+            self.send_all("reward {}".format(reward))
+
+            if reward < 0:
+                self.deinitialized = True
             sleep( 1.0 / POLL_RATE_HZ )
 
     def accept_connection(self):
@@ -138,7 +175,7 @@ def main():
     api = HardwareNetworkAPI()
     try:
         api.sensor_loop()
-    except:
+    except KeyboardInterrupt:
         print("Stopping...")
     api.d.kill()
 

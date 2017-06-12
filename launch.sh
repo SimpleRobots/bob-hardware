@@ -1,5 +1,5 @@
 #!/bin/bash
 
-cd /home/pi/git/alice-hardware
+cd /home/pi/git/bob-hardware
 
-screen -dmS alice-hardware python main.py
+screen -dmS bob-hardware sudo python main.py
