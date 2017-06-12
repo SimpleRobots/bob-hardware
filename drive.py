@@ -28,7 +28,7 @@ class Driver(object):
 
         
     def set_state(self, speed, turn):
-        duty_speed = CENTER_DUTY + MAX_DUTY * speed
+        duty_speed = CENTER_DUTY + MAX_DUTY * speed * 0.5
         duty_turn = CENTER_DUTY + MAX_DUTY * (- turn - 21)
         duty_turn = max(4.8, min(9.0, duty_turn))
         #print(duty_turn)
